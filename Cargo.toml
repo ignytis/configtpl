@@ -1,0 +1,10 @@
+[package]
+name = "configtpl"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+minijinja = "2.12.0"
