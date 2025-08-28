@@ -1,13 +1,16 @@
-use std::{ffi::c_char, ptr::null};
+use std::ptr::null;
 
 use minijinja::Error;
 
-use crate::ffi::utils::strings::string_to_cchar;
+use crate::ffi::{
+    types::std_types::{ConstCharPtr, UInt, USize},
+    utils::strings::string_to_cchar
+};
 
 
 /// Handle allocated for initialized Jinja environment.
 /// All operations which invoke the Jinja envionment should have this handle provided
-pub type EnrironmentHandle = usize;
+pub type EnrironmentHandle = UInt;
 
 /**
  * @brief Indicates the place where error occurred.
@@ -17,9 +20,9 @@ pub type EnrironmentHandle = usize;
 #[repr(C)]
 #[derive(Default)]
 pub struct TemplateErrorLocation {
-    line: usize,
-    start: usize,
-    end: usize,
+    line: USize,
+    start: USize,
+    end: USize,
 }
 
 /**
@@ -44,7 +47,7 @@ pub enum RenderStatus
 pub struct RenderResult
 {
     pub status: RenderStatus,
-    pub output: *const c_char,
+    pub output: ConstCharPtr,
     pub location: TemplateErrorLocation,
 }
 

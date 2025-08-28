@@ -7,4 +7,5 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
+libc = "0.2.175"
 minijinja = "2.12.0"
