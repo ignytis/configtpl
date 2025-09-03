@@ -1,20 +1,22 @@
 pub mod types;
 pub mod ffi;
 
-use std::sync::{LazyLock, Mutex};
+use std::{collections::HashMap, sync::{LazyLock, Mutex}};
 
-use minijinja::{Environment, context};
+use minijinja::Environment;
 
 use crate::ffi::{
-    types::std_types::ConstCharPtr,
+    types::{
+        collections::Array,
+        std_types::ConstCharPtr,
+    },
     utils::strings::{cchar_const_deallocate, cchar_to_string}
 };
 
+/// cbindgen:no-export
 static ENVIRONMENTS: LazyLock<Mutex<Vec<Option<Environment>>>> = LazyLock::new(|| {
     Mutex::new(Vec::new())
 });
-
-
 
 /// This function should be invoked before any other library routines.
 /// Right at the moment it does nothing, but some initialization might be added in the future.
@@ -33,7 +35,7 @@ pub extern "C" fn configtpl_new_environment() -> types::EnrironmentHandle {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn configtpl_render(env_handle: types::EnrironmentHandle, tpl: ConstCharPtr) -> *const types::RenderResult {
+pub extern "C" fn configtpl_render(env_handle: types::EnrironmentHandle, tpl: ConstCharPtr, context: *const Array<[ConstCharPtr; 2]>) -> *mut types::RenderResult {
     let envs = ENVIRONMENTS.lock().unwrap();
     let env = match envs.get(env_handle as usize) {
         Some(e) => match e {
@@ -50,7 +52,16 @@ pub extern "C" fn configtpl_render(env_handle: types::EnrironmentHandle, tpl: Co
         }
     };
 
-    let res: types::RenderResult = match env.render_str(cchar_to_string(tpl).as_str(), context!{}) {
+    let mut ctx_rs: HashMap<String, String> = HashMap::new();
+    if !context.is_null() {
+        let context_deref = unsafe {*context};
+        for i in 0..context_deref.len {
+            let [k, v] = unsafe { *context_deref.data.offset(i as isize) }.map(|x| cchar_to_string(x));
+            ctx_rs.insert(k, v);
+        }
+    }
+
+    let res: types::RenderResult = match env.render_str(cchar_to_string(tpl).as_str(), ctx_rs) {
         Ok(s) => s.into(),
         Err(e) => e.into(),
     };

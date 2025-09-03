@@ -1,1 +1,9 @@
+.vscode
+.idea
+.project
+
 /target
+
+# For docs/examples
+my_test_app
+*.o

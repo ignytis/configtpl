@@ -32,11 +32,11 @@ pub struct TemplateErrorLocation {
 #[derive(Default)]
 pub enum RenderStatus
 {
-    RenderStatusSuccess = 0,
-    RenderStatusErrorInvalidHandle = 1,
-    RenderStatusErrorTemplateRender = 2,
+    Success = 0,
+    ErrorInvalidHandle = 1,
+    ErrorTemplateRender = 2,
     #[default]
-    RenderStatusErrorUnknown = 255,
+    ErrorUnknown = 255,
 }
 
 /**
@@ -54,7 +54,7 @@ pub struct RenderResult
 impl RenderResult {
     pub fn new_invalid_handle() -> Self {
         Self {
-            status: RenderStatus::RenderStatusErrorInvalidHandle,
+            status: RenderStatus::ErrorInvalidHandle,
             output: null(),
             location: TemplateErrorLocation::default(),
         }
@@ -64,7 +64,7 @@ impl RenderResult {
 impl From<String> for RenderResult {
     fn from(value: String) -> Self {
         Self {
-            status: RenderStatus::RenderStatusSuccess,
+            status: RenderStatus::Success,
             output: string_to_cchar(value),
             location: Default::default(),
         }
@@ -74,7 +74,7 @@ impl From<String> for RenderResult {
 impl From<Error> for RenderResult {
     fn from(value: Error) -> Self {
         Self {
-            status: RenderStatus::RenderStatusErrorTemplateRender,
+            status: RenderStatus::ErrorTemplateRender,
             output: string_to_cchar(value.to_string()),
             location: TemplateErrorLocation {
                 line: value.line().unwrap(),
