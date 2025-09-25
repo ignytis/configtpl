@@ -3,7 +3,9 @@
 # compiles them into object files, and then links them into a single library.
 
 # Add the Rust output directory to path. Link statically if static=true is provided
-LDFLAGS = -L../../../../target/debug
+LIB_PATHS ?= ../../../../target/debug
+LDFLAGS = -L$(LIB_PATHS)
+
 static ?= false
 ifeq ($(static),true)
 LDFLAGS += -Wl,-Bstatic

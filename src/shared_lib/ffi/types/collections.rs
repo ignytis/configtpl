@@ -1,4 +1,4 @@
-use crate::ffi::types::std_types;
+use crate::shared_lib::ffi::types::std_types;
 
 #[repr(C)]
 #[derive(Clone, Copy)]

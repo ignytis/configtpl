@@ -2,7 +2,7 @@ use std::ptr::null;
 
 use minijinja::Error;
 
-use crate::ffi::{
+use crate::shared_lib::ffi::{
     types::std_types::{ConstCharPtr, UInt, USize},
     utils::strings::string_to_cchar
 };

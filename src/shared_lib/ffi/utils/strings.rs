@@ -1,6 +1,6 @@
 use std::ffi::{c_char, CStr, CString};
 
-use crate::ffi::types::std_types::ConstCharPtr;
+use crate::shared_lib::ffi::types::std_types::ConstCharPtr;
 
 ///Converts a *char C type into Rust string.
 /// ```
