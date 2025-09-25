@@ -13,5 +13,5 @@ serde = "1.0.226"
 yaml-rust = "0.4.5"
 
 [features]
-default = ["shared_lib"]
+default = []
 shared_lib = ["dep:libc"]
