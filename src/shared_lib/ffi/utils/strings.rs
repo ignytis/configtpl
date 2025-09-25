@@ -4,7 +4,7 @@ use crate::shared_lib::ffi::types::std_types::ConstCharPtr;
 
 ///Converts a *char C type into Rust string.
 /// ```
-/// use configtpl::ffi::utils::strings;
+/// use configtpl::shared_lib::ffi::utils::strings;
 /// assert_eq!(strings::cchar_to_string(c"Hello, World!".as_ptr()),
 ///            String::from("Hello, World!"));
 /// ```
