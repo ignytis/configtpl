@@ -2,8 +2,9 @@
 # for detailed documentation of every option here.
 
 language = "C"
+cpp_compat = true
 
-
+after_includes = "#define CONFIGTPL_FEATURE_SHARED_LIB"
 
 ############## Options for Wrapping the Contents of the Header #################
 
@@ -19,3 +20,10 @@ prefix = "configtpl_"
 [enum]
 rename_variants = "ScreamingSnakeCase"
 prefix_with_name = true
+
+[defines]
+"feature = shared_lib" = "CONFIGTPL_FEATURE_SHARED_LIB"
+
+[parse.expand]
+
+all_features = true

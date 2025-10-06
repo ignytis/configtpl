@@ -23,5 +23,5 @@ fn test_builder_simple() {
     cfg.insert(String::from("urls"), ConfigParam::HashMap(cfg_urls));
     cfg.insert(String::from("server"), ConfigParam::HashMap(cfg_server));
 
-    assert_eq!(cfg, builder.build_from_files(&String::from("tests/t000_simple/config.cfg"), &None, &None).unwrap());
+    assert_eq!(ConfigParam::HashMap(cfg), builder.build_from_files(&String::from("tests/t000_simple/config.cfg"), &None, &None).unwrap());
 }

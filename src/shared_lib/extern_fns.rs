@@ -1,18 +1,14 @@
-use std::{collections::HashMap, sync::{LazyLock, Mutex}};
+use std::sync::{LazyLock, Mutex};
 
-use minijinja::Environment;
-
-use crate::shared_lib::ffi::{
-    types::{
-        collections::Array,
-        std_types::ConstCharPtr,
-        lib_types,
-    },
-    utils::strings::{cchar_const_deallocate, cchar_to_string}
+use crate::{
+    config_builder::ConfigBuilder,
+    shared_lib::ffi::{types::{
+            collections::ArrayStringKV, lib_types, std_types::ConstCharPtr
+        }, utils::strings::{cchar_const_deallocate, cchar_to_string}}, types::config_param::ConfigParam
 };
 
-/// cbindgen:no-export
-static ENVIRONMENTS: LazyLock<Mutex<Vec<Option<Environment>>>> = LazyLock::new(|| {
+/// cbindgen:ignore
+static CFG_BUILDERS: LazyLock<Mutex<Vec<Option<ConfigBuilder>>>> = LazyLock::new(|| {
     Mutex::new(Vec::new())
 });
 
@@ -24,65 +20,76 @@ pub extern "C" fn configtpl_init() {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn configtpl_new_environment() -> lib_types::EnrironmentHandle {
-    let mut envs = ENVIRONMENTS.lock().unwrap();
-    let mut env = Environment::new();
-    env.set_undefined_behavior(minijinja::UndefinedBehavior::Strict);
-    envs.push(Some(env));
-    (envs.len() - 1) as lib_types::EnrironmentHandle
+pub extern "C" fn configtpl_new_config_builder() -> lib_types::CfgBuilderHandle {
+    let builder = ConfigBuilder::new();
+    let mut envs = CFG_BUILDERS.lock().unwrap();
+    envs.push(Some(builder));
+    (envs.len() - 1) as lib_types::CfgBuilderHandle
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn configtpl_render(env_handle: lib_types::EnrironmentHandle, tpl: ConstCharPtr, context: *const Array<[ConstCharPtr; 2]>) -> *mut lib_types::RenderResult {
-    let envs = ENVIRONMENTS.lock().unwrap();
-    let env = match envs.get(env_handle as usize) {
+pub extern "C" fn configtpl_build_from_files(env_handle: lib_types::CfgBuilderHandle, paths: ConstCharPtr,
+                                              overrides: *const ArrayStringKV,
+                                              ctx: *const ArrayStringKV) -> *const lib_types::BuildResult {
+    let cfg_builders = CFG_BUILDERS.lock().unwrap();
+    let cfg_builder = match cfg_builders.get(env_handle as usize) {
         Some(e) => match e {
             Some(e2) => Some(e2),
             None => None,
         },
         None => None,
     };
-    let env = match env {
-        Some(e) => e,
-        None => {
-            let res = Box::new(lib_types::RenderResult::new_invalid_handle());
-            return Box::into_raw(res);
-        }
+    let cfg_builder = match cfg_builder {
+        Some(b) => b,
+        None => return lib_types::BuildResult::new_error_invalid_handle().into(),
     };
 
-    let mut ctx_rs: HashMap<String, String> = HashMap::new();
-    if !context.is_null() {
-        let context_deref = unsafe {*context};
-        for i in 0..context_deref.len {
-            let [k, v] = unsafe { *context_deref.data.offset(i as isize) }.map(|x| cchar_to_string(x));
-            ctx_rs.insert(k, v);
-        }
+    let overrides: Option<ConfigParam> = if overrides.is_null() {
+        None
+    } else {
+        let overrides: ConfigParam = overrides.into();
+        Some(overrides)
+    };
+    let ctx: Option<ConfigParam> = if ctx.is_null() {
+        None
+    } else {
+        let ctx: ConfigParam = ctx.into();
+        Some(ctx)
+    };
+
+
+    match cfg_builder.build_from_files(&cchar_to_string(paths), &overrides, &ctx) {
+        Ok(v) => v.into(),
+        Err(e) => lib_types::BuildResult::new_error_building(&e).into(),
     }
 
-    let res: lib_types::RenderResult = match env.render_str(cchar_to_string(tpl).as_str(), ctx_rs) {
-        Ok(s) => s.into(),
-        Err(e) => e.into(),
-    };
-
-    let res = Box::new(res);
-    return Box::into_raw(res);
 }
 
 /// Deallocates memory of rendering result object
 #[unsafe(no_mangle)]
-pub extern "C" fn configtpl_render_free_result(r: *mut lib_types::RenderResult) {
+pub extern "C" fn configtpl_build_free_result(r: *mut lib_types::BuildResult) {
     if r.is_null() {
         return
     }
 
     let r_box = unsafe { Box::from_raw(r) };
-    cchar_const_deallocate(r_box.output);
+    if r_box.error_msg.is_aligned() {
+        cchar_const_deallocate(r_box.error_msg);
+    }
+    if r_box.output.data.is_aligned() {
+        for i in 0..r_box.output.len {
+            let data = unsafe { *r_box.output.data.offset(i as isize) };
+            cchar_const_deallocate(data[0]);
+            cchar_const_deallocate(data[1]);
+        }
+
+    }
 }
 
-/// Removes environment
+/// Removes a config builder
 #[unsafe(no_mangle)]
-pub extern "C" fn configtpl_free_environment(env_handle: lib_types::EnrironmentHandle) {
-    let mut envs = ENVIRONMENTS.lock().unwrap();
+pub extern "C" fn configtpl_free_config_builder(env_handle: lib_types::CfgBuilderHandle) {
+    let mut envs = CFG_BUILDERS.lock().unwrap();
     envs[env_handle as usize] = None;
 }
 

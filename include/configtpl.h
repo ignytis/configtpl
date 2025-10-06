@@ -9,78 +9,129 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#define CONFIGTPL_FEATURE_SHARED_LIB
 
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 /**
- *  * @brief Status of template rendering
+ *  * @brief Status of configuration building
  */
-typedef enum configtpl_RenderStatus {
-  CONFIGTPL_RENDER_STATUS_SUCCESS = 0,
-  CONFIGTPL_RENDER_STATUS_ERROR_INVALID_HANDLE = 1,
-  CONFIGTPL_RENDER_STATUS_ERROR_TEMPLATE_RENDER = 2,
-  CONFIGTPL_RENDER_STATUS_ERROR_UNKNOWN = 255,
-} configtpl_RenderStatus;
+typedef enum configtpl_BuildStatus {
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+  CONFIGTPL_BUILD_STATUS_SUCCESS = 0,
+#endif
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+  CONFIGTPL_BUILD_STATUS_ERROR_INVALID_HANDLE = 1,
+#endif
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+  /**
+   * Indicates that an error occurred during building the config
+   */
+  CONFIGTPL_BUILD_STATUS_ERROR_BUILDING = 200,
+#endif
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+  /**
+   * An unknown error. Should not occur in general.
+   */
+  CONFIGTPL_BUILD_STATUS_ERROR_UNKNOWN = 255,
+#endif
+} configtpl_BuildStatus;
+#endif
 
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 typedef unsigned int configtpl_UInt;
+#endif
 
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 /**
- * Handle allocated for initialized Jinja environment.
- * All operations which invoke the Jinja envionment should have this handle provided
+ * Handle allocated for initialized Config Builder.
+ * All operations which invoke the Config Builder should have this handle provided
  */
-typedef configtpl_UInt configtpl_EnrironmentHandle;
+typedef configtpl_UInt configtpl_CfgBuilderHandle;
+#endif
 
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 typedef const char *configtpl_ConstCharPtr;
+#endif
 
-typedef size_t configtpl_USize;
-
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 /**
- *  * @brief Indicates the place where error occurred.  *   * This structure is copied from inja lib (SourceLocation) in order not to depend on it
+ * Array of two strings
  */
-typedef struct configtpl_TemplateErrorLocation {
-  configtpl_USize line;
-  configtpl_USize start;
-  configtpl_USize end;
-} configtpl_TemplateErrorLocation;
+typedef configtpl_ConstCharPtr configtpl_StringKV[2];
+#endif
 
-/**
- *  * @brief Result of template rendering
- */
-typedef struct configtpl_RenderResult {
-  enum configtpl_RenderStatus status;
-  configtpl_ConstCharPtr output;
-  struct configtpl_TemplateErrorLocation location;
-} configtpl_RenderResult;
-
-typedef struct configtpl_Array__________ConstCharPtr__________2 {
-  configtpl_ConstCharPtr (*data)[2];
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+typedef struct configtpl_Array_StringKV {
+  configtpl_StringKV *data;
   configtpl_UInt len;
-} configtpl_Array__________ConstCharPtr__________2;
+} configtpl_Array_StringKV;
+#endif
 
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+/**
+ * Array of key-value pairs
+ */
+typedef struct configtpl_Array_StringKV configtpl_ArrayStringKV;
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+/**
+ *  * @brief Result of configuration building
+ */
+typedef struct configtpl_BuildResult {
+  enum configtpl_BuildStatus status;
+  configtpl_ArrayStringKV output;
+  configtpl_ConstCharPtr error_msg;
+} configtpl_BuildResult;
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 /**
  * This function should be invoked before any other library routines.
  * Right at the moment it does nothing, but some initialization might be added in the future.
  */
 void configtpl_init(void);
+#endif
 
-configtpl_EnrironmentHandle configtpl_new_environment(void);
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+configtpl_CfgBuilderHandle configtpl_new_config_builder(void);
+#endif
 
-struct configtpl_RenderResult *configtpl_render(configtpl_EnrironmentHandle env_handle,
-                                                configtpl_ConstCharPtr tpl,
-                                                const struct configtpl_Array__________ConstCharPtr__________2 *context);
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+const struct configtpl_BuildResult *configtpl_build_from_files(configtpl_CfgBuilderHandle env_handle,
+                                                               configtpl_ConstCharPtr paths,
+                                                               const configtpl_ArrayStringKV *overrides,
+                                                               const configtpl_ArrayStringKV *ctx);
+#endif
 
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 /**
  * Deallocates memory of rendering result object
  */
-void configtpl_render_free_result(struct configtpl_RenderResult *r);
+void configtpl_build_free_result(struct configtpl_BuildResult *r);
+#endif
 
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 /**
- * Removes environment
+ * Removes a config builder
  */
-void configtpl_free_environment(configtpl_EnrironmentHandle env_handle);
+void configtpl_free_config_builder(configtpl_CfgBuilderHandle env_handle);
+#endif
 
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 /**
  * This function should be invoked after any other library routines.
  * /// Right at the moment it does nothing, but some final actions might be added in the future.
  */
 void configtpl_unload(void);
+#endif
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif  // __cplusplus
 
 #endif  /* _CONFIGTPL_H */

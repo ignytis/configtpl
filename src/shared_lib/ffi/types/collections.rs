@@ -1,4 +1,6 @@
-use crate::shared_lib::ffi::types::std_types;
+use std::collections::HashMap;
+
+use crate::{shared_lib::ffi::{types::std_types, utils::strings::{cchar_to_string, string_to_cchar}}, types::config_param::ConfigParam};
 
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -26,7 +28,7 @@ impl<T> Array<T> {
         std::mem::forget(boxed_slice);
         arr
     }
-    
+
     /// Deallocates memory for array
     pub fn free_contents(&mut self) {
         let s = unsafe { std::slice::from_raw_parts_mut(self.data, self.len as usize) };
@@ -36,4 +38,80 @@ impl<T> Array<T> {
         }
         self.len = 0;
     }
+}
+
+impl<T> Default for Array<T> {
+    fn default() -> Self {
+        Array::new_of_len(0)
+    }
+}
+
+/// Array of two strings
+pub type StringKV = [std_types::ConstCharPtr; 2];
+/// Array of key-value pairs
+pub type ArrayStringKV = Array<StringKV>;
+
+impl Into<ConfigParam> for *const ArrayStringKV {
+    fn into(self) -> ConfigParam {
+        let ptr = unsafe { self.read() };
+        let mut config_param: HashMap<String, ConfigParam> = HashMap::new();
+        for i in 0..ptr.len {
+            let item  = unsafe { ptr.data.offset(i as isize)  };
+            let k = cchar_to_string(item.wrapping_add(0) as *const i8);
+            let v = cchar_to_string(item.wrapping_add(1) as *const i8);
+            config_param.insert(k, ConfigParam::String(v));
+        }
+        ConfigParam::HashMap(config_param)
+    }
+}
+
+impl From<ConfigParam> for ArrayStringKV {
+    fn from(param: ConfigParam) -> Self {
+        let data = match param {
+            ConfigParam::HashMap(m) => m,
+            _ => HashMap::default(),
+        };
+        let flat_data = flatten_config_hashmap(&data);
+        let result = ArrayStringKV::new_of_len(flat_data.len());
+        for (i, (k, v)) in flat_data.iter().enumerate() {
+            let item = unsafe { result.data.offset(i as isize) };
+
+            unsafe { *item = [string_to_cchar(k), string_to_cchar(v)] };
+        }
+
+        result
+    }
+}
+
+/// Flattens the config param.
+/// TODO:
+fn flatten_config_hashmap(hm: &HashMap<String, ConfigParam>) -> HashMap<String, String> {
+    let mut result: HashMap<String, String> = HashMap::new();
+
+    for (k, v) in hm {
+        match v {
+            ConfigParam::Boolean(b) => {
+                result.insert(k.clone(), b.to_string());
+            },
+            ConfigParam::Int(n) => {
+                result.insert(k.clone(), n.to_string());
+            },
+            ConfigParam::HashMap(hm2) => {
+                for (k2, v2) in flatten_config_hashmap(hm2) {
+                    result.insert(format!("{}.{}", k, k2), v2);
+                }
+            },
+            ConfigParam::Null => {
+                result.insert(k.clone(), "null".to_string());
+            }
+            ConfigParam::String(s) => {
+                result.insert(k.clone(), s.clone());
+            },
+            ConfigParam::Vec(_a) => {
+                // TODO: implement vec flattening
+            }
+        }
+    }
+
+    result
 }

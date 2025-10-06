@@ -1,86 +1,83 @@
-use std::ptr::null;
-
-use minijinja::Error;
-
-use crate::shared_lib::ffi::{
-    types::std_types::{ConstCharPtr, UInt, USize},
-    utils::strings::string_to_cchar
-};
+use crate::{shared_lib::ffi::{types::{
+        collections::ArrayStringKV,
+        std_types::{ConstCharPtr, UInt},
+    }, utils::strings::string_to_cchar}, types::config_param::ConfigParam};
 
 
-/// Handle allocated for initialized Jinja environment.
-/// All operations which invoke the Jinja envionment should have this handle provided
-pub type EnrironmentHandle = UInt;
+/// Handle allocated for initialized Config Builder.
+/// All operations which invoke the Config Builder should have this handle provided
+pub type CfgBuilderHandle = UInt;
 
 /**
- * @brief Indicates the place where error occurred.
- * 
- * This structure is copied from inja lib (SourceLocation) in order not to depend on it
+ * @brief Status of configuration building
  */
 #[repr(C)]
 #[derive(Default)]
-pub struct TemplateErrorLocation {
-    line: USize,
-    start: USize,
-    end: USize,
-}
-
-/**
- * @brief Status of template rendering
- */
-#[repr(C)]
-#[derive(Default)]
-pub enum RenderStatus
+pub enum BuildStatus
 {
     Success = 0,
     ErrorInvalidHandle = 1,
-    ErrorTemplateRender = 2,
+    /// Indicates that an error occurred during building the config
+    ErrorBuilding = 200,
     #[default]
+    /// An unknown error. Should not occur in general.
     ErrorUnknown = 255,
 }
 
 /**
- * @brief Result of template rendering
+ * @brief Result of configuration building
  */
 #[repr(C)]
 #[derive(Default)]
-pub struct RenderResult
+pub struct BuildResult
 {
-    pub status: RenderStatus,
-    pub output: ConstCharPtr,
-    pub location: TemplateErrorLocation,
+    pub status: BuildStatus,
+    pub output: ArrayStringKV,
+    pub error_msg: ConstCharPtr,
 }
 
-impl RenderResult {
-    pub fn new_invalid_handle() -> Self {
+impl BuildResult {
+    pub fn new_error_invalid_handle() -> Self {
         Self {
-            status: RenderStatus::ErrorInvalidHandle,
-            output: null(),
-            location: TemplateErrorLocation::default(),
+            status: BuildStatus::ErrorInvalidHandle,
+            output: ArrayStringKV::default(),
+            error_msg: Default::default(),
+        }
+    }
+
+    pub fn new_error_building(msg: &String) -> Self {
+        Self {
+            status: BuildStatus::ErrorBuilding,
+            output: ArrayStringKV::default(),
+            error_msg: string_to_cchar(msg),
         }
     }
 }
 
-impl From<String> for RenderResult {
-    fn from(value: String) -> Self {
+impl From<ArrayStringKV> for BuildResult {
+    fn from(value: ArrayStringKV) -> Self {
         Self {
-            status: RenderStatus::Success,
-            output: string_to_cchar(value),
-            location: Default::default(),
+            status: BuildStatus::Success,
+            output: value,
+            error_msg: Default::default(),
         }
     }
 }
 
-impl From<Error> for RenderResult {
-    fn from(value: Error) -> Self {
-        Self {
-            status: RenderStatus::ErrorTemplateRender,
-            output: string_to_cchar(value.to_string()),
-            location: TemplateErrorLocation {
-                line: value.line().unwrap(),
-                start: value.range().unwrap().start,
-                end: value.range().unwrap().end,
-            },
-        }
+impl From<ConfigParam> for *const BuildResult {
+    fn from(value: ConfigParam) -> Self {
+        let r = BuildResult {
+            status: BuildStatus::Success,
+            output: value.into(),
+            error_msg: Default::default(),
+        };
+
+        Box::leak(Box::new(r))
+    }
+}
+
+impl Into<*const BuildResult> for BuildResult {
+    fn into(self) -> *const BuildResult {
+        Box::leak(Box::new(self))
     }
 }

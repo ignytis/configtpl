@@ -24,7 +24,7 @@ impl<'a> ConfigBuilder<'a> {
     /// * `paths` - a colon-separated list of paths to config files. Later values overwrite earlier ones.
     /// * `overrides` - an optional dictionary of overrides.
     /// * `ctx` - context. Context is not merged into configuration keys, but participates in rendering of values
-    pub fn build_from_files(&self, paths: &String, overrides: &Option<ConfigParam>, ctx: &Option<ConfigParam>) -> Result<HashMap<String, ConfigParam>, String> {
+    pub fn build_from_files(&self, paths: &String, overrides: &Option<ConfigParam>, ctx: &Option<ConfigParam>) -> Result<ConfigParam, String> {
         let paths: Vec<String> = paths.split(":").map(|p| String::from(p)).collect();
         let ctx = match ctx {
             Some(c) => c,
@@ -54,9 +54,10 @@ impl<'a> ConfigBuilder<'a> {
             result = config_params_merge(&result, o)?;
         }
 
-        match result {
-            ConfigParam::HashMap(v) => Ok(v),
-            _ => Err(format!("The configuration is resolved into incorrect type: {}", config_param_type_to_str(&result)))
+        if let ConfigParam::HashMap(_) = result {
+            Ok(result)
+        } else {
+            Err(format!("The configuration is resolved into incorrect type: {}", config_param_type_to_str(&result)))
         }
     }
 }
