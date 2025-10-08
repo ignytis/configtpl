@@ -13,7 +13,13 @@ int main(int argc, char** argv)
     }
     char *paths = argv[1];
 
-    configtpl_CfgBuilderHandle handle = configtpl_new_config_builder();
+    if (CONFIGTPL_SIMPLE_RESULT_ERROR == configtpl_init())
+    {
+        fprintf(stderr, "Failed to initialize configtpl");
+        return 1;
+    }
+
+    configtpl_CfgBuilderHandle handle = configtpl_configbuilder_new();
 
     configtpl_ConstCharPtr context_data[2][2] = {
         {"mykey", "myval"},
@@ -30,7 +36,7 @@ int main(int argc, char** argv)
         .len = 0
     };
 
-    const struct configtpl_BuildResult * r = configtpl_build_from_files(handle, paths, &overrides, &ctx);
+    const struct configtpl_BuildResult *r = configtpl_configbuilder_build_from_files(handle, paths, &overrides, &ctx);
     int ret_code = -1;
     int line_nr = 0;
     char *line = NULL;
@@ -58,8 +64,14 @@ int main(int argc, char** argv)
 
     }
 
-    configtpl_build_free_result((struct configtpl_BuildResult*)r);
-    configtpl_free_config_builder(handle);
+    configtpl_configbuilder_result_free((struct configtpl_BuildResult*)r);
+    configtpl_configbuilder_free(handle);
+
+    if (CONFIGTPL_SIMPLE_RESULT_ERROR == configtpl_cleanup())
+    {
+        fprintf(stderr, "Failed to deinitialize configtpl");
+        ret_code = 1;
+    }
 
     return ret_code;
 }

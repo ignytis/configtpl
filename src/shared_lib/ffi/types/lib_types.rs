@@ -8,9 +8,15 @@ use crate::{shared_lib::ffi::{types::{
 /// All operations which invoke the Config Builder should have this handle provided
 pub type CfgBuilderHandle = UInt;
 
-/**
- * @brief Status of configuration building
- */
+/// Simple result of function call. Used for function which don't (yet?) need to return more complex result.
+#[repr(C)]
+pub enum SimpleResult
+{
+    Success = 0,
+    Error = 1,
+}
+
+/// Status of configuration building
 #[repr(C)]
 #[derive(Default)]
 pub enum BuildStatus
@@ -24,9 +30,7 @@ pub enum BuildStatus
     ErrorUnknown = 255,
 }
 
-/**
- * @brief Result of configuration building
- */
+/// Result of configuration building
 #[repr(C)]
 #[derive(Default)]
 pub struct BuildResult

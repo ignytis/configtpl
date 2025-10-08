@@ -1,2 +1,2 @@
-pub mod extern_fns;
+pub mod extern_functions;
 pub mod ffi;

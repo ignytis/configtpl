@@ -13,7 +13,7 @@
 
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 /**
- *  * @brief Status of configuration building
+ * Status of configuration building
  */
 typedef enum configtpl_BuildStatus {
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
@@ -35,6 +35,20 @@ typedef enum configtpl_BuildStatus {
   CONFIGTPL_BUILD_STATUS_ERROR_UNKNOWN = 255,
 #endif
 } configtpl_BuildStatus;
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+/**
+ * Simple result of function call. Used for function which don't (yet?) need to return more complex result.
+ */
+typedef enum configtpl_SimpleResult {
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+  CONFIGTPL_SIMPLE_RESULT_SUCCESS = 0,
+#endif
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+  CONFIGTPL_SIMPLE_RESULT_ERROR = 1,
+#endif
+} configtpl_SimpleResult;
 #endif
 
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
@@ -76,7 +90,7 @@ typedef struct configtpl_Array_StringKV configtpl_ArrayStringKV;
 
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 /**
- *  * @brief Result of configuration building
+ * Result of configuration building
  */
 typedef struct configtpl_BuildResult {
   enum configtpl_BuildStatus status;
@@ -91,35 +105,38 @@ extern "C" {
 
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 /**
+ * Creates a new instance of configuration builder
+ */
+configtpl_CfgBuilderHandle configtpl_configbuilder_new(void);
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+const struct configtpl_BuildResult *configtpl_configbuilder_build_from_files(configtpl_CfgBuilderHandle env_handle,
+                                                                             configtpl_ConstCharPtr paths,
+                                                                             const configtpl_ArrayStringKV *overrides,
+                                                                             const configtpl_ArrayStringKV *ctx);
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+/**
+ * Deallocates memory of configuration builder result
+ */
+void configtpl_configbuilder_result_free(struct configtpl_BuildResult *r);
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+/**
+ * Deallocates memory of configuration builder instance
+ */
+void configtpl_configbuilder_free(configtpl_CfgBuilderHandle env_handle);
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+/**
  * This function should be invoked before any other library routines.
  * Right at the moment it does nothing, but some initialization might be added in the future.
  */
-void configtpl_init(void);
-#endif
-
-#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
-configtpl_CfgBuilderHandle configtpl_new_config_builder(void);
-#endif
-
-#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
-const struct configtpl_BuildResult *configtpl_build_from_files(configtpl_CfgBuilderHandle env_handle,
-                                                               configtpl_ConstCharPtr paths,
-                                                               const configtpl_ArrayStringKV *overrides,
-                                                               const configtpl_ArrayStringKV *ctx);
-#endif
-
-#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
-/**
- * Deallocates memory of rendering result object
- */
-void configtpl_build_free_result(struct configtpl_BuildResult *r);
-#endif
-
-#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
-/**
- * Removes a config builder
- */
-void configtpl_free_config_builder(configtpl_CfgBuilderHandle env_handle);
+enum configtpl_SimpleResult configtpl_init(void);
 #endif
 
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
@@ -127,7 +144,7 @@ void configtpl_free_config_builder(configtpl_CfgBuilderHandle env_handle);
  * This function should be invoked after any other library routines.
  * /// Right at the moment it does nothing, but some final actions might be added in the future.
  */
-void configtpl_unload(void);
+enum configtpl_SimpleResult configtpl_cleanup(void);
 #endif
 
 #ifdef __cplusplus

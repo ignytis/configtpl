@@ -12,15 +12,9 @@ static CFG_BUILDERS: LazyLock<Mutex<Vec<Option<ConfigBuilder>>>> = LazyLock::new
     Mutex::new(Vec::new())
 });
 
-/// This function should be invoked before any other library routines.
-/// Right at the moment it does nothing, but some initialization might be added in the future.
+/// Creates a new instance of configuration builder
 #[unsafe(no_mangle)]
-pub extern "C" fn configtpl_init() {
-
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn configtpl_new_config_builder() -> lib_types::CfgBuilderHandle {
+pub extern "C" fn configtpl_configbuilder_new() -> lib_types::CfgBuilderHandle {
     let builder = ConfigBuilder::new();
     let mut envs = CFG_BUILDERS.lock().unwrap();
     envs.push(Some(builder));
@@ -28,7 +22,7 @@ pub extern "C" fn configtpl_new_config_builder() -> lib_types::CfgBuilderHandle 
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn configtpl_build_from_files(env_handle: lib_types::CfgBuilderHandle, paths: ConstCharPtr,
+pub extern "C" fn configtpl_configbuilder_build_from_files(env_handle: lib_types::CfgBuilderHandle, paths: ConstCharPtr,
                                               overrides: *const ArrayStringKV,
                                               ctx: *const ArrayStringKV) -> *const lib_types::BuildResult {
     let cfg_builders = CFG_BUILDERS.lock().unwrap();
@@ -65,9 +59,9 @@ pub extern "C" fn configtpl_build_from_files(env_handle: lib_types::CfgBuilderHa
 
 }
 
-/// Deallocates memory of rendering result object
+/// Deallocates memory of configuration builder result
 #[unsafe(no_mangle)]
-pub extern "C" fn configtpl_build_free_result(r: *mut lib_types::BuildResult) {
+pub extern "C" fn configtpl_configbuilder_result_free(r: *mut lib_types::BuildResult) {
     if r.is_null() {
         return
     }
@@ -86,16 +80,9 @@ pub extern "C" fn configtpl_build_free_result(r: *mut lib_types::BuildResult) {
     }
 }
 
-/// Removes a config builder
+/// Deallocates memory of configuration builder instance
 #[unsafe(no_mangle)]
-pub extern "C" fn configtpl_free_config_builder(env_handle: lib_types::CfgBuilderHandle) {
+pub extern "C" fn configtpl_configbuilder_free(env_handle: lib_types::CfgBuilderHandle) {
     let mut envs = CFG_BUILDERS.lock().unwrap();
     envs[env_handle as usize] = None;
-}
-
-/// This function should be invoked after any other library routines.
-/// /// Right at the moment it does nothing, but some final actions might be added in the future.
-#[unsafe(no_mangle)]
-pub extern "C" fn configtpl_unload() {
-
 }
