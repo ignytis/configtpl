@@ -54,9 +54,7 @@ int main(int argc, char** argv)
             fprintf(stderr, "Invalid handle: %d", handle);
             break;
         case CONFIGTPL_BUILD_STATUS_ERROR_BUILDING:
-            // fprintf(stderr, "Failed to render template: %s (line %ld, %ld - %ld)\n", r->output, r->location.line, r->location.start, r->location.end);
             fprintf(stderr, "Failed to render template: %s\n", r->error_msg);
-
             break;
         default:
             fprintf(stderr, "Unknown error occurred.");

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use minijinja::Environment;
 
-use crate::{types::config_param::{config_param_type_to_str, config_params_merge, ConfigParam}, yaml::yaml_string_to_configs};
+use crate::{types::config_param::ConfigParam, yaml::yaml_string_to_configs};
 
 pub struct ConfigBuilder<'a> {
     jinja_env: Environment<'a>
@@ -45,19 +45,19 @@ impl<'a> ConfigBuilder<'a> {
             };
 
             for config_param_iter in yaml_string_to_configs(&yaml_contents)? {
-                result = config_params_merge(&result, &config_param_iter)?;
+                result = ConfigParam::merge(&result, &config_param_iter)?;
             }
         }
 
         // Apply overrides
         if let Some(o) = overrides {
-            result = config_params_merge(&result, o)?;
+            result = ConfigParam::merge(&result, o)?;
         }
 
         if let ConfigParam::HashMap(_) = result {
             Ok(result)
         } else {
-            Err(format!("The configuration is resolved into incorrect type: {}", config_param_type_to_str(&result)))
+            Err(format!("The configuration is resolved into incorrect type: {}", result.type_to_str()))
         }
     }
 }
