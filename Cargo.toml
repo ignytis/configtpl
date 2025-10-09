@@ -3,6 +3,9 @@ name = "configtpl"
 version = "0.1.0"
 edition = "2024"
 
+description = "A configuration library which uses Jinja + YAML to render the configuration values."
+license-file = "LICENSE"
+
 [lib]
 crate-type = ["cdylib", "lib", "staticlib"]
 
