@@ -186,7 +186,7 @@ mod tests {
         let second = ConfigParam::HashMap(second);
 
 
-        let merged = match config_params_merge(&first, &second) {
+        let merged = match ConfigParam::merge(&first, &second) {
             Ok(r) => r,
             Err(e) => panic!("{}", e),
         };
