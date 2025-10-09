@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use minijinja::Environment;
 
-use crate::{types::config_param::ConfigParam, yaml::yaml_string_to_configs};
+use crate::types::config_param::ConfigParam;
 
 pub struct ConfigBuilder<'a> {
     jinja_env: Environment<'a>
@@ -42,7 +42,7 @@ impl<'a> ConfigBuilder<'a> {
                 Err(e) => return Err(format!("Failed to render the configuration file '{}': {}", &path, e)),
             };
 
-            for config_param_iter in yaml_string_to_configs(&yaml_contents)? {
+            for config_param_iter in ConfigParam::new_from_yaml_str(yaml_contents)? {
                 result = ConfigParam::merge(&result, &config_param_iter)?;
             }
         }
