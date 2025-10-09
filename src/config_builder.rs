@@ -8,8 +8,6 @@ pub struct ConfigBuilder<'a> {
     jinja_env: Environment<'a>
 }
 
-
-
 impl<'a> ConfigBuilder<'a> {
     pub fn new() -> Self {
         let jinja_env = Environment::new();

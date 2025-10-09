@@ -26,36 +26,6 @@ impl ConfigParam {
         }
     }
 
-    /// Returns a parameter by key.
-    /// Unlike config_param_consume_hashmap_key, doesn't remove the key from collection
-    pub fn config_param_get_hashmap_key<S: Into<String>>(&self, key: S)
-            -> Result<Option<ConfigParam>, String> {
-        match self {
-            ConfigParam::HashMap(m) => {
-                match m.get(&key.into()) {
-                    Some(x) => Ok(Some(x.clone())),
-                    None => Ok(None),
-                }
-
-            },
-            _ => return Err(format!("The provided config is not a hashmap: {:?}", self)),
-        }
-    }
-
-    /// Returns a parameter by key and removes the key from colection
-    pub fn config_param_consume_hashmap_key<S: Into<String>>(&mut self, key: S)
-            -> Result<Option<ConfigParam>, String> {
-        match self {
-            ConfigParam::HashMap(m) => {
-                match m.remove(&key.into()) {
-                    Some(x) => Ok(Some(x)),
-                    None => Ok(None),
-                }
-            },
-            _ => return Err(format!("The provided config is not a hashmap: {:?}", self)),
-        }
-    }
-
     /// Merges two configuration params into new instance of configuration params
     /// Collections are merged for sure. In case of scalar values - return the second value
     pub fn merge(first: &ConfigParam, second: &ConfigParam) -> Result<ConfigParam, String> {
@@ -99,60 +69,12 @@ impl ConfigParam {
             _ => Ok(second.clone()),
         }
     }
-
-    /// Converts the configuration parameter into a string-key-value hashmap.
-    pub fn into_string_kv_hashmap(&self) -> Result<Option<HashMap<String, String>>, String> {
-        let config_param_map = match self {
-            ConfigParam::HashMap(m) => m,
-            _ => return Err(format!("Cannot convert the configuration into hashmap: the provided config is not of map type")),
-        };
-        let v: HashMap<String, String> = config_param_map.iter()
-            .map(|(k, v)| {
-                let v2 = match v {
-                    ConfigParam::String(v) => v.clone(),
-                    ConfigParam::Int(v) => format!("{}", v),
-                    _ => return Err(format!("Invalid data type of environment variable '{}'. It must be string or integer", k.clone()))
-                };
-                Ok((k.clone(), v2))
-            })
-            .collect::<Result<_, _>>()?;
-        Ok(Some(v))
-    }
-
-    /// Returns a property of provided config as a haspmap where keys and values are strings.
-    /// Returns an error if provided collection or requested key are not hashmaps.
-    pub fn config_param_get_key_as_string_kv_hashmap<S: Into<String>>(config_param: &ConfigParam, key: S) -> Result<Option<HashMap<String, String>>, String> {
-        let key: String = key.into();
-        let config_param_map = match config_param {
-            ConfigParam::HashMap(m) => m,
-            _ => return Err(format!("Cannot read a key '{}' into hashmap: the type of provided config is not hashmap", key)),
-        };
-
-        let config_param_map = match config_param_map.get(&key) {
-            Some(x) => x.clone(),
-            None => return Ok(None),
-        };
-        let config_param_map = match ConfigParam::into_string_kv_hashmap(&config_param_map)? {
-                Some(x) => Some(x.clone()),
-                None => None,
-        };
-        Ok(config_param_map)
-    }
-
-    pub fn config_param_get_key_remove_key_from_hashmap<S: Into<String>>(config_param: &mut ConfigParam, key: S) -> Result<Option<ConfigParam>, String> {
-        let k = key.into();
-        match config_param {
-            ConfigParam::HashMap(kv) => Ok(kv.remove(&k)),
-            _ => Err(format!("Cannot delete a key '{}' from config: the provided config is not a hashmap", &k))
-        }
-    }
 }
 
 impl Serialize for ConfigParam {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
             S: serde::Serializer {
-        // let mut s = serializer.serialize_struct("ConfigParam", 3)?;
         match self {
             ConfigParam::Boolean(v) => v.serialize(serializer),
             ConfigParam::HashMap(v) => v.serialize(serializer),
@@ -166,7 +88,6 @@ impl Serialize for ConfigParam {
 
 #[cfg(test)]
 mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
     #[test]

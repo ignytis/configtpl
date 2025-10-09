@@ -4,7 +4,6 @@ use yaml_rust::{Yaml, YamlLoader};
 
 use crate::types::config_param::ConfigParam;
 
-
 /// Converts a YAML string to vector of ConfigParam objects
 pub fn yaml_string_to_configs(yml: &String) -> Result<Vec<ConfigParam>, String> {
     let yaml_doc = match YamlLoader::load_from_str(yml) {
