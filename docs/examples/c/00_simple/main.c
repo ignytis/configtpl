@@ -1,8 +1,51 @@
-#include <stdio.h>
+#ifdef _WIN32
 #include <stdlib.h>
+#endif
+#include <stdio.h>
 
 #include "../../../../include/configtpl.h"
 
+#define MAX_NAME_LENGTH 500
+
+void printConfig(const struct configtpl_ConfigParam *cfg, char *prefix)
+{
+    prefix = prefix ? prefix : "";
+    const struct configtpl_Array_ConfigParam *vec;
+    const struct configtpl_Array_ConfigParamDictItem *map;
+    switch (cfg->param_type)
+    {
+        case CONFIGTPL_CONFIG_PARAM_TYPE_INT:
+            printf("%s=%ld\n", prefix, cfg->value.integer);
+            break;
+        case CONFIGTPL_CONFIG_PARAM_TYPE_STRING:
+            printf("%s=%s\n", prefix, cfg->value.string);
+            break;
+        case CONFIGTPL_CONFIG_PARAM_TYPE_BOOLEAN:
+            printf("%s=%s\n", prefix, cfg->value.boolean ? "true" : "false");
+            break;
+        case CONFIGTPL_CONFIG_PARAM_TYPE_NULL:
+            printf("%s=null\n", prefix);
+            break;
+        case CONFIGTPL_CONFIG_PARAM_TYPE_VEC:
+            vec = &cfg->value.vector;
+            for (int j = 0; j < vec->len; j++)
+            {
+                char fullNameSub[MAX_NAME_LENGTH];
+                sprintf(fullNameSub, "%s[%d]", prefix, j);
+                printConfig(&vec->data[j], fullNameSub);
+            }
+            break;
+        case CONFIGTPL_CONFIG_PARAM_TYPE_MAP:
+            map = &cfg->value.map;
+            for (int j = 0; j < map->len; j++)
+            {
+                char fullNameSub[MAX_NAME_LENGTH];
+                sprintf(fullNameSub, "%s.%s", prefix, map->data[j].name);
+                printConfig(map->data[j].value, fullNameSub);
+            }
+            break;
+    }
+}
 
 int main(int argc, char** argv)
 {
@@ -43,12 +86,7 @@ int main(int argc, char** argv)
     switch (r->status)
     {
         case CONFIGTPL_BUILD_STATUS_SUCCESS:
-            for (int i = 0; i < r->output.len; i++)
-            {
-                configtpl_StringKV *kv = &r->output.data[i];
-                printf("%s=%s\n", (*kv)[0], (*kv)[1]);
-            }
-            ret_code = 0;
+            printConfig(&r->output, NULL);
             break;
         case CONFIGTPL_BUILD_STATUS_ERROR_INVALID_HANDLE:
             fprintf(stderr, "Invalid handle: %d", handle);

@@ -4,6 +4,9 @@
 language = "C"
 cpp_compat = true
 
+# This enables the SHARED_LIB feature.
+# If `"feature = shared_lib"` is skipped in config, cbindgen throws warnings about missing feature.
+# However, if this line is added, #ifdef statemants are added to the generated header file
 after_includes = "#define CONFIGTPL_FEATURE_SHARED_LIB"
 
 ############## Options for Wrapping the Contents of the Header #################

@@ -18,6 +18,7 @@ impl<T> Array<T> {
         }
     }
 
+    /// NB! Leaks memory. You need to call `free_contents` to deallocate memory.
     pub fn from_vec(vector: Vec<T>) -> Array<T> {
         let len = vector.len() as std_types::UInt;
         let mut boxed_slice: Box<[T]> = vector.into_boxed_slice();
@@ -51,6 +52,7 @@ pub type StringKV = [std_types::ConstCharPtr; 2];
 /// Array of key-value pairs
 pub type ArrayStringKV = Array<StringKV>;
 
+/// TODO: move to ConfigParam::into? ConfigParam is less abstract type than Array
 impl Into<ConfigParam> for *const ArrayStringKV {
     fn into(self) -> ConfigParam {
         let ptr = unsafe { self.read() };
@@ -65,6 +67,7 @@ impl Into<ConfigParam> for *const ArrayStringKV {
     }
 }
 
+/// TODO: move to ConfigParam::into? ConfigParam is less abstract type than Array
 impl From<ConfigParam> for ArrayStringKV {
     fn from(param: ConfigParam) -> Self {
         let data = match param {
@@ -84,7 +87,7 @@ impl From<ConfigParam> for ArrayStringKV {
 }
 
 /// Flattens the config param.
-/// TODO:
+/// TODO: get rid ot this function? Flat KV maps will be replaced with structures
 fn flatten_config_hashmap(hm: &HashMap<String, ConfigParam>) -> HashMap<String, String> {
     let mut result: HashMap<String, String> = HashMap::new();
 

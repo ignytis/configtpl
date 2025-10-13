@@ -84,6 +84,27 @@ impl ConfigParam {
             _ => Ok(second.clone()),
         }
     }
+
+    /// Debug printing the config param
+    pub fn debug_print(&self, prefix: Option<String>) {
+        let prefix = prefix.unwrap_or_default();
+        match self {
+            ConfigParam::Boolean(v) => println!("{}: {}", prefix, v),
+            ConfigParam::HashMap(v) => {
+                for (k, v) in v {
+                    v.debug_print(Some(format!("{}.{}", prefix, k)));
+                }
+            },
+            ConfigParam::Int(v) => println!("{}: {}", prefix, v),
+            ConfigParam::Null => println!("{}: null", prefix),
+            ConfigParam::String(v) => println!("{}: {}", prefix, v),
+            ConfigParam::Vec(v) => {
+                for (i, item) in v.iter().enumerate() {
+                    item.debug_print(Some(format!("{}[{}]", prefix, i)));
+                }
+            },
+        }
+    }
 }
 
 impl Serialize for ConfigParam {

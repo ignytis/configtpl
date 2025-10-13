@@ -1,7 +1,13 @@
-use crate::{shared_lib::ffi::{types::{
-        collections::ArrayStringKV,
-        std_types::{ConstCharPtr, UInt},
-    }, utils::strings::string_to_cchar}, types::config_param::ConfigParam};
+use crate::{shared_lib::ffi::
+    {
+        types::{
+            config_param::ConfigParam,
+            std_types::{ConstCharPtr, UInt}
+        },
+        utils::strings::string_to_cchar
+    },
+    types::config_param::ConfigParam as LibConfigParam
+};
 
 
 /// Handle allocated for initialized Config Builder.
@@ -36,7 +42,7 @@ pub enum BuildStatus
 pub struct BuildResult
 {
     pub status: BuildStatus,
-    pub output: ArrayStringKV,
+    pub output: ConfigParam,
     pub error_msg: ConstCharPtr,
 }
 
@@ -44,7 +50,7 @@ impl BuildResult {
     pub fn new_error_invalid_handle() -> Self {
         Self {
             status: BuildStatus::ErrorInvalidHandle,
-            output: ArrayStringKV::default(),
+            output: ConfigParam::new_null(),
             error_msg: Default::default(),
         }
     }
@@ -52,36 +58,34 @@ impl BuildResult {
     pub fn new_error_building(msg: &String) -> Self {
         Self {
             status: BuildStatus::ErrorBuilding,
-            output: ArrayStringKV::default(),
+            output: ConfigParam::new_null(),
             error_msg: string_to_cchar(msg),
         }
     }
 }
 
-impl From<ArrayStringKV> for BuildResult {
-    fn from(value: ArrayStringKV) -> Self {
+/// TODO: delete? We can probably return only *const-s
+impl From<LibConfigParam> for BuildResult {
+    fn from(value: LibConfigParam) -> Self {
         Self {
             status: BuildStatus::Success,
-            output: value,
+            output: value.into(),
             error_msg: Default::default(),
         }
     }
 }
 
-impl From<ConfigParam> for *const BuildResult {
-    fn from(value: ConfigParam) -> Self {
-        let r = BuildResult {
-            status: BuildStatus::Success,
-            output: value.into(),
-            error_msg: Default::default(),
-        };
-
-        Box::leak(Box::new(r))
+impl From<LibConfigParam> for *const BuildResult {
+    /// NB! Leaks the value
+    fn from(value: LibConfigParam) -> Self {
+        let r: BuildResult = value.into();
+        Box::into_raw(Box::new(r))
     }
 }
 
 impl Into<*const BuildResult> for BuildResult {
+    /// NB! Leaks the value
     fn into(self) -> *const BuildResult {
-        Box::leak(Box::new(self))
+        Box::into_raw(Box::new(self))
     }
 }

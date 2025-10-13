@@ -38,6 +38,29 @@ typedef enum configtpl_BuildStatus {
 #endif
 
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+typedef enum configtpl_ConfigParamType {
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+  CONFIGTPL_CONFIG_PARAM_TYPE_BOOLEAN,
+#endif
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+  CONFIGTPL_CONFIG_PARAM_TYPE_MAP,
+#endif
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+  CONFIGTPL_CONFIG_PARAM_TYPE_INT,
+#endif
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+  CONFIGTPL_CONFIG_PARAM_TYPE_NULL,
+#endif
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+  CONFIGTPL_CONFIG_PARAM_TYPE_STRING,
+#endif
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+  CONFIGTPL_CONFIG_PARAM_TYPE_VEC,
+#endif
+} configtpl_ConfigParamType;
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 /**
  * Simple result of function call. Used for function which don't (yet?) need to return more complex result.
  */
@@ -64,7 +87,67 @@ typedef configtpl_UInt configtpl_CfgBuilderHandle;
 #endif
 
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+typedef unsigned short configtpl_Bool;
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 typedef const char *configtpl_ConstCharPtr;
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+/**
+ * An item in configuration param of dicrionary type
+ */
+typedef struct configtpl_ConfigParamDictItem {
+  configtpl_ConstCharPtr name;
+  const struct configtpl_ConfigParam *value;
+} configtpl_ConfigParamDictItem;
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+typedef struct configtpl_Array_ConfigParamDictItem {
+  struct configtpl_ConfigParamDictItem *data;
+  configtpl_UInt len;
+} configtpl_Array_ConfigParamDictItem;
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+typedef long configtpl_LongInt;
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+typedef struct configtpl_Array_ConfigParam {
+  struct configtpl_ConfigParam *data;
+  configtpl_UInt len;
+} configtpl_Array_ConfigParam;
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+typedef union configtpl_ConfigParamValue {
+  configtpl_Bool boolean;
+  struct configtpl_Array_ConfigParamDictItem map;
+  configtpl_LongInt integer;
+  configtpl_ConstCharPtr string;
+  struct configtpl_Array_ConfigParam vector;
+} configtpl_ConfigParamValue;
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+typedef struct configtpl_ConfigParam {
+  enum configtpl_ConfigParamType param_type;
+  union configtpl_ConfigParamValue value;
+} configtpl_ConfigParam;
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+/**
+ * Result of configuration building
+ */
+typedef struct configtpl_BuildResult {
+  enum configtpl_BuildStatus status;
+  struct configtpl_ConfigParam output;
+  configtpl_ConstCharPtr error_msg;
+} configtpl_BuildResult;
 #endif
 
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
@@ -86,17 +169,6 @@ typedef struct configtpl_Array_StringKV {
  * Array of key-value pairs
  */
 typedef struct configtpl_Array_StringKV configtpl_ArrayStringKV;
-#endif
-
-#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
-/**
- * Result of configuration building
- */
-typedef struct configtpl_BuildResult {
-  enum configtpl_BuildStatus status;
-  configtpl_ArrayStringKV output;
-  configtpl_ConstCharPtr error_msg;
-} configtpl_BuildResult;
 #endif
 
 #ifdef __cplusplus
@@ -121,7 +193,7 @@ const struct configtpl_BuildResult *configtpl_configbuilder_build_from_files(con
 /**
  * Deallocates memory of configuration builder result
  */
-void configtpl_configbuilder_result_free(struct configtpl_BuildResult *r);
+void configtpl_configbuilder_result_free(const struct configtpl_BuildResult *r);
 #endif
 
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)

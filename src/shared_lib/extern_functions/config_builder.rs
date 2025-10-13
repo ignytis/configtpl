@@ -3,7 +3,9 @@ use std::sync::{LazyLock, Mutex};
 use crate::{
     config_builder::ConfigBuilder,
     shared_lib::ffi::{types::{
-            collections::ArrayStringKV, lib_types, std_types::ConstCharPtr
+            collections::ArrayStringKV,
+            lib_types,
+            std_types::ConstCharPtr
         }, utils::strings::{cchar_const_deallocate, cchar_to_string}}, types::config_param::ConfigParam
 };
 
@@ -51,7 +53,6 @@ pub extern "C" fn configtpl_configbuilder_build_from_files(env_handle: lib_types
         Some(ctx)
     };
 
-
     match cfg_builder.build_from_files(&cchar_to_string(paths), &overrides, &ctx) {
         Ok(v) => v.into(),
         Err(e) => lib_types::BuildResult::new_error_building(&e).into(),
@@ -61,23 +62,16 @@ pub extern "C" fn configtpl_configbuilder_build_from_files(env_handle: lib_types
 
 /// Deallocates memory of configuration builder result
 #[unsafe(no_mangle)]
-pub extern "C" fn configtpl_configbuilder_result_free(r: *mut lib_types::BuildResult) {
+pub extern "C" fn configtpl_configbuilder_result_free(r: *const lib_types::BuildResult) {
     if r.is_null() {
         return
     }
 
-    let r_box = unsafe { Box::from_raw(r) };
+    let mut r_box = unsafe { Box::from_raw(r as *mut lib_types::BuildResult) };
     if r_box.error_msg.is_aligned() {
         cchar_const_deallocate(r_box.error_msg);
     }
-    if r_box.output.data.is_aligned() {
-        for i in 0..r_box.output.len {
-            let data = unsafe { *r_box.output.data.offset(i as isize) };
-            cchar_const_deallocate(data[0]);
-            cchar_const_deallocate(data[1]);
-        }
-
-    }
+    r_box.output.free_contents();
 }
 
 /// Deallocates memory of configuration builder instance
