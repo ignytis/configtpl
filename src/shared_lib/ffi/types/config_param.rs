@@ -95,19 +95,25 @@ impl ConfigParam {
     pub fn free_contents(&mut self) {
         match self.param_type {
             ConfigParamType::Map => {
-                let c = unsafe { self.value.map };
+                let mut c = unsafe { self.value.map };
                 for i in 0..c.len {
                     let item: *mut ConfigParamDictItem = unsafe { c.data.offset(i as isize) };
                     unsafe { (*item).free_contents() };
                 }
+                c.free_contents();
             },
             ConfigParamType::Vec => {
-                let c = unsafe { self.value.vector };
+                let mut c = unsafe { self.value.vector };
                 for i in 0..c.len {
                     let item: *mut ConfigParam = unsafe { c.data.offset(i as isize) };
                     unsafe { (*item).free_contents() };
                 }
+                c.free_contents();
             },
+            ConfigParamType::String => {
+                let c = unsafe { self.value.string };
+                cchar_const_deallocate(c);
+            }
             _ => {}, // no deallocation needed for scalar types
         }
     }
@@ -220,7 +226,8 @@ impl ConfigParamDictItem {
 
     pub fn free_contents(&mut self) {
         unsafe {
-            let _ = Box::from_raw(self.value.cast_mut());
+            let mut v = Box::from_raw(self.value.cast_mut());
+            v.free_contents();
             cchar_const_deallocate(self.name);
         }
     }
