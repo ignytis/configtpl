@@ -171,6 +171,37 @@ impl From<&LibConfigParam> for *const ConfigParam {
     }
 }
 
+impl Into<LibConfigParam> for ConfigParam {
+    fn into(self) -> LibConfigParam {
+        match self.param_type {
+            ConfigParamType::Boolean => LibConfigParam::Boolean(unsafe { self.value.boolean > 0 }),
+            ConfigParamType::Map => {
+                let mut map: HashMap<String, LibConfigParam> = HashMap::new();
+                unsafe {
+                    for i in 0..self.value.map.len {
+                        let src_obj = self.value.map.data.offset(i as isize);
+                        map.insert(cchar_to_string((*src_obj).name), (*(*src_obj).value).into());
+                    }
+                }
+                LibConfigParam::HashMap(map)
+            },
+            ConfigParamType::Int => LibConfigParam::Int(unsafe { self.value.integer }),
+            ConfigParamType::Null => LibConfigParam::Null,
+            ConfigParamType::String => LibConfigParam::String(unsafe { cchar_to_string(self.value.string) }),
+            ConfigParamType::Vec => {
+                let mut vec: Vec<LibConfigParam> = Vec::new();
+                unsafe {
+                    for i in 0..self.value.map.len {
+                        let src_obj = self.value.map.data.offset(i as isize);
+                        vec.push((*(*src_obj).value).into());
+                    }
+                }
+                LibConfigParam::Vec(vec)
+            },
+        }
+    }
+}
+
 /// An item in configuration param of dicrionary type
 #[derive(Clone, Copy)]
 #[repr(C)]

@@ -54,7 +54,13 @@ int main(int argc, char** argv)
         fprintf(stderr, "Usage: %s PATHS\n", argv[0]);
         return 1;
     }
-    char *paths = argv[1];
+    const char *paths_val[] = {
+        argv[1],
+    };
+    struct configtpl_Array_ConstCharPtr paths = {
+        .len = 1,
+        .data = paths_val,
+    };
 
     if (CONFIGTPL_SIMPLE_RESULT_ERROR == configtpl_init())
     {
@@ -64,29 +70,70 @@ int main(int argc, char** argv)
 
     configtpl_CfgBuilderHandle handle = configtpl_configbuilder_new();
 
-    configtpl_ConstCharPtr context_data[2][2] = {
-        {"mykey", "myval"},
-        {"mykey2", "myval2"}
+    struct configtpl_ConfigParam context_item1 = {
+        .param_type = CONFIGTPL_CONFIG_PARAM_TYPE_STRING,
+        .value.string = "my_val1",
     };
-    struct configtpl_Array_StringKV ctx = {
-        .data = context_data,
-        .len = 2
+    struct configtpl_ConfigParam context_item2 = {
+        .param_type = CONFIGTPL_CONFIG_PARAM_TYPE_STRING,
+        .value.string = "my_val2",
+    };
+    struct configtpl_ConfigParamDictItem context_items[2] = {
+        {
+            .name = "my_key1",
+            .value = &context_item1,
+        },
+        {
+            .name = "my_key2",
+            .value = &context_item2,
+        },
+    };
+    struct configtpl_ConfigParam context = {
+        .param_type = CONFIGTPL_CONFIG_PARAM_TYPE_MAP,
+        .value.map = {
+            .data = context_items,
+            .len = 2
+        }
     };
 
-    configtpl_ConstCharPtr overrides_data[1][2] = {};
-    struct configtpl_Array_StringKV overrides = {
-        .data = overrides_data,
-        .len = 0
+    struct configtpl_ConfigParam overrides_item1 = {
+        .param_type = CONFIGTPL_CONFIG_PARAM_TYPE_STRING,
+        .value.string = "my_overidden_value",
+    };
+    struct configtpl_ConfigParamDictItem overrides_items[1] = {
+        {
+            .name = "my_overidden_key",
+            .value = &overrides_item1,
+        },
+    };
+    struct configtpl_ConfigParam overrides = {
+        .param_type = CONFIGTPL_CONFIG_PARAM_TYPE_MAP,
+        .value.map = {
+            .data = overrides_items,
+            .len = 1
+        }
     };
 
-    const struct configtpl_BuildResult *r = configtpl_configbuilder_build_from_files(handle, paths, &overrides, &ctx);
+    struct configtpl_BuildArgs args = {
+        .context = &context,
+        .defaults = NULL,
+        .paths = paths,
+        .overrides = &overrides,
+    };
+
+
+    fprintf(stderr, "Before build...\n");
+    const struct configtpl_BuildResult *r = configtpl_configbuilder_build(handle, args);
+    fprintf(stderr, "After build...\n");
     int ret_code = -1;
     int line_nr = 0;
     char *line = NULL;
     switch (r->status)
     {
         case CONFIGTPL_BUILD_STATUS_SUCCESS:
+            fprintf(stderr, "Operation succeeded. Here is the result:\n");
             printConfig(&r->output, NULL);
+            ret_code = 0;
             break;
         case CONFIGTPL_BUILD_STATUS_ERROR_INVALID_HANDLE:
             fprintf(stderr, "Invalid handle: %d", handle);
@@ -100,7 +147,7 @@ int main(int argc, char** argv)
 
     }
 
-    configtpl_configbuilder_result_free((struct configtpl_BuildResult*)r);
+    configtpl_configbuilder_result_free(r);
     configtpl_configbuilder_free(handle);
 
     if (CONFIGTPL_SIMPLE_RESULT_ERROR == configtpl_cleanup())

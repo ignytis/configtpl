@@ -28,6 +28,7 @@ pub enum SimpleResult
 pub enum BuildStatus
 {
     Success = 0,
+    /// An invalid handle is provided
     ErrorInvalidHandle = 1,
     /// Indicates that an error occurred during building the config
     ErrorBuilding = 200,

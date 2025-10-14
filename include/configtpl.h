@@ -20,6 +20,9 @@ typedef enum configtpl_BuildStatus {
   CONFIGTPL_BUILD_STATUS_SUCCESS = 0,
 #endif
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+  /**
+   * An invalid handle is provided
+   */
   CONFIGTPL_BUILD_STATUS_ERROR_INVALID_HANDLE = 1,
 #endif
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
@@ -151,24 +154,32 @@ typedef struct configtpl_BuildResult {
 #endif
 
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
-/**
- * Array of two strings
- */
-typedef configtpl_ConstCharPtr configtpl_StringKV[2];
-#endif
-
-#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
-typedef struct configtpl_Array_StringKV {
-  configtpl_StringKV *data;
+typedef struct configtpl_Array_ConstCharPtr {
+  configtpl_ConstCharPtr *data;
   configtpl_UInt len;
-} configtpl_Array_StringKV;
+} configtpl_Array_ConstCharPtr;
 #endif
 
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
-/**
- * Array of key-value pairs
- */
-typedef struct configtpl_Array_StringKV configtpl_ArrayStringKV;
+typedef struct configtpl_BuildArgs {
+  /**
+   * Context is injected into each iteration of configuration rendering,
+   * but it is not returned as part of the final configuration.
+   */
+  struct configtpl_ConfigParam *context;
+  /**
+   * Defaults for configuration parameters. Applied at the first stage of configuration building.
+   */
+  struct configtpl_ConfigParam *defaults;
+  /**
+   * Overrides for configuration parameters. Applied at the last stage of configuration building.
+   */
+  struct configtpl_ConfigParam *overrides;
+  /**
+   * A list of paths to configuration files
+   */
+  struct configtpl_Array_ConstCharPtr paths;
+} configtpl_BuildArgs;
 #endif
 
 #ifdef __cplusplus
@@ -183,10 +194,8 @@ configtpl_CfgBuilderHandle configtpl_configbuilder_new(void);
 #endif
 
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
-const struct configtpl_BuildResult *configtpl_configbuilder_build_from_files(configtpl_CfgBuilderHandle env_handle,
-                                                                             configtpl_ConstCharPtr paths,
-                                                                             const configtpl_ArrayStringKV *overrides,
-                                                                             const configtpl_ArrayStringKV *ctx);
+const struct configtpl_BuildResult *configtpl_configbuilder_build(configtpl_CfgBuilderHandle env_handle,
+                                                                  struct configtpl_BuildArgs args);
 #endif
 
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)

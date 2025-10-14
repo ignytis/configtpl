@@ -2,7 +2,7 @@ extern crate configtpl;
 
 use std::collections::HashMap;
 
-use configtpl::{config_builder::ConfigBuilder, types::config_param::ConfigParam};
+use configtpl::{config_builder::ConfigBuilder, types::{config_builder::BuildArgs, config_param::ConfigParam}};
 
 
 
@@ -23,5 +23,6 @@ fn test_builder_simple() {
     cfg.insert(String::from("urls"), ConfigParam::HashMap(cfg_urls));
     cfg.insert(String::from("server"), ConfigParam::HashMap(cfg_server));
 
-    assert_eq!(ConfigParam::HashMap(cfg), builder.build_from_files(&String::from("tests/t000_simple/config.cfg"), &None, &None).unwrap());
+    assert_eq!(ConfigParam::HashMap(cfg),
+               builder.build(&BuildArgs::default().with_paths_separated("tests/t000_simple/config.cfg")).unwrap());
 }

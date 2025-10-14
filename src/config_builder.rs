@@ -1,8 +1,8 @@
-use std::{collections::HashMap, env};
+use std::collections::HashMap;
 
 use minijinja::Environment;
 
-use crate::types::config_param::ConfigParam;
+use crate::types::{config_builder::BuildArgs, config_param::ConfigParam};
 
 pub struct ConfigBuilder<'a> {
     jinja_env: Environment<'a>
@@ -23,15 +23,14 @@ impl<'a> ConfigBuilder<'a> {
     ///    A system path list separator should be used (i.e. `:` on Unix and `;` on Windows).
     /// * `overrides` - an optional dictionary of overrides.
     /// * `ctx` - context. Context is not merged into configuration keys, but participates in rendering of values
-    pub fn build_from_files(&self, paths: &String, overrides: &Option<ConfigParam>, ctx: &Option<ConfigParam>) -> Result<ConfigParam, String> {
-        let paths: Vec<String> = env::split_paths(paths).map(|p| p.into_os_string().into_string().unwrap()).collect();
-        let ctx = match ctx {
-            Some(c) => c,
+    pub fn build(&self, args: &BuildArgs) -> Result<ConfigParam, String> {
+        let ctx = match &args.context {
+            Some(c) => &c,
             None => &ConfigParam::HashMap(HashMap::new()),
         };
 
         let mut result: ConfigParam = ConfigParam::HashMap(HashMap::new());
-        for path in &paths {
+        for path in &args.paths {
             let contents = match std::fs::read_to_string(path) {
                 Ok(c) => c,
                 Err(e) => return Err(format!("Failed to read the configuration file file '{}': {}", &path, e)),
@@ -51,7 +50,7 @@ impl<'a> ConfigBuilder<'a> {
         }
 
         // Apply overrides
-        if let Some(o) = overrides {
+        if let Some(o) = &args.overrides {
             result = ConfigParam::merge(&result, o)?;
         }
 
