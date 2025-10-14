@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, env};
 
 use minijinja::Environment;
 
@@ -19,29 +19,32 @@ impl<'a> ConfigBuilder<'a> {
 
     /// Builds the configuration from list of provided files.
     /// # Arguments
-    /// * `paths` - a colon-separated list of paths to config files. Later values overwrite earlier ones.
+    /// * `paths` - a list of paths to config files. Later values overwrite earlier ones.\
+    ///    A system path list separator should be used (i.e. `:` on Unix and `;` on Windows).
     /// * `overrides` - an optional dictionary of overrides.
     /// * `ctx` - context. Context is not merged into configuration keys, but participates in rendering of values
     pub fn build_from_files(&self, paths: &String, overrides: &Option<ConfigParam>, ctx: &Option<ConfigParam>) -> Result<ConfigParam, String> {
-        let paths: Vec<String> = paths.split(":").map(|p| String::from(p)).collect();
+        let paths: Vec<String> = env::split_paths(paths).map(|p| p.into_os_string().into_string().unwrap()).collect();
         let ctx = match ctx {
             Some(c) => c,
             None => &ConfigParam::HashMap(HashMap::new()),
         };
 
         let mut result: ConfigParam = ConfigParam::HashMap(HashMap::new());
-
         for path in &paths {
             let contents = match std::fs::read_to_string(path) {
                 Ok(c) => c,
                 Err(e) => return Err(format!("Failed to read the configuration file file '{}': {}", &path, e)),
             };
 
-            let yaml_contents = match self.jinja_env.render_str(contents.as_str(), ctx) {
+            // Apply all the previous iterations to context
+            let ctx_iter = ConfigParam::merge(ctx, &result);
+
+            // Render the YAML document (might produce multiple files) and merge into result
+            let yaml_contents = match self.jinja_env.render_str(contents.as_str(), ctx_iter) {
                 Ok(r) => r,
                 Err(e) => return Err(format!("Failed to render the configuration file '{}': {}", &path, e)),
             };
-
             for config_param_iter in ConfigParam::new_from_yaml_str(yaml_contents)? {
                 result = ConfigParam::merge(&result, &config_param_iter)?;
             }
@@ -52,10 +55,6 @@ impl<'a> ConfigBuilder<'a> {
             result = ConfigParam::merge(&result, o)?;
         }
 
-        if let ConfigParam::HashMap(_) = result {
-            Ok(result)
-        } else {
-            Err(format!("The configuration is resolved into incorrect type: {}", result.type_to_str()))
-        }
+        Ok(result)
     }
 }
