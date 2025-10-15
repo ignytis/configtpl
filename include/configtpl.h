@@ -49,6 +49,9 @@ typedef enum configtpl_ConfigParamType {
   CONFIGTPL_CONFIG_PARAM_TYPE_MAP,
 #endif
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+  CONFIGTPL_CONFIG_PARAM_TYPE_FLOAT,
+#endif
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
   CONFIGTPL_CONFIG_PARAM_TYPE_INT,
 #endif
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
@@ -94,6 +97,10 @@ typedef unsigned short configtpl_Bool;
 #endif
 
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
+typedef double configtpl_LongFloat;
+#endif
+
+#if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 typedef const char *configtpl_ConstCharPtr;
 #endif
 
@@ -128,6 +135,7 @@ typedef struct configtpl_Array_ConfigParam {
 #if defined(CONFIGTPL_FEATURE_SHARED_LIB)
 typedef union configtpl_ConfigParamValue {
   configtpl_Bool boolean;
+  configtpl_LongFloat float_num;
   struct configtpl_Array_ConfigParamDictItem map;
   configtpl_LongInt integer;
   configtpl_ConstCharPtr string;
@@ -171,6 +179,10 @@ typedef struct configtpl_BuildArgs {
    * Defaults for configuration parameters. Applied at the first stage of configuration building.
    */
   struct configtpl_ConfigParam *defaults;
+  /**
+   * If provided, environment variables with this prefix will be injected into configuration after files
+   */
+  configtpl_ConstCharPtr env_vars_prefix;
   /**
    * Overrides for configuration parameters. Applied at the last stage of configuration building.
    */

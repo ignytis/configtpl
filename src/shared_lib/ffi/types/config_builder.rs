@@ -1,5 +1,5 @@
 use crate::{
-    shared_lib::ffi::{types::{collections::Array, config_param::ConfigParam, std_types::ConstCharPtr}, utils::strings::cchar_to_string},
+    shared_lib::ffi::{types::{collections::Array, config_param::ConfigParam, std_types::{Char, ConstCharPtr}}, utils::strings::cchar_to_string},
     types::config_builder::BuildArgs as LibBuildArgs
 };
 
@@ -11,6 +11,8 @@ pub struct BuildArgs {
     pub context: *mut ConfigParam,
     /// Defaults for configuration parameters. Applied at the first stage of configuration building.
     pub defaults: *mut ConfigParam,
+    /// If provided, environment variables with this prefix will be injected into configuration after files
+    pub env_vars_prefix: ConstCharPtr,
     /// Overrides for configuration parameters. Applied at the last stage of configuration building.
     pub overrides: *mut ConfigParam,
     /// A list of paths to configuration files
@@ -29,6 +31,9 @@ impl Into<LibBuildArgs> for BuildArgs {
         }
         if !self.overrides.is_null() {
             result = result.with_overrides(unsafe { *(self.overrides) }.into());
+        }
+        if !self.env_vars_prefix.is_null() {
+            result = result.with_env_vars_prefix(cchar_to_string(self.env_vars_prefix as *const Char));
         }
         if self.paths.len > 0 {
             let paths: Vec<String> = unsafe {

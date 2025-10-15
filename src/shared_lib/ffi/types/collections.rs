@@ -96,6 +96,9 @@ fn flatten_config_hashmap(hm: &HashMap<String, ConfigParam>) -> HashMap<String, 
             ConfigParam::Boolean(b) => {
                 result.insert(k.clone(), b.to_string());
             },
+            ConfigParam::Float(n) => {
+                result.insert(k.clone(), n.to_string());
+            },
             ConfigParam::Int(n) => {
                 result.insert(k.clone(), n.to_string());
             },

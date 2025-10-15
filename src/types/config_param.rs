@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, env};
 
 use serde::ser::Serialize;
 use yaml_rust::{Yaml, YamlLoader};
@@ -9,6 +9,7 @@ pub enum ConfigParam {
     Boolean(bool),
     HashMap(HashMap<String, ConfigParam>),
     Int(i64),
+    Float(f64),
     Null,
     String(String),
     Vec(Vec<ConfigParam>),
@@ -29,11 +30,47 @@ impl ConfigParam {
         }
     }
 
+    /// Returns a new instance of ConfigParam, assuming that argument is a scalar value
+    fn new_from_scalar_str_assuming_type(val: &str) -> ConfigParam {
+        if val.starts_with('"') && val.ends_with('"') {
+            ConfigParam::String(val[1..val.len() - 1].to_string())
+        } else if val.eq_ignore_ascii_case("null") {
+            ConfigParam::Null
+        } else if val.eq_ignore_ascii_case("true") {
+            ConfigParam::Boolean(true)
+        } else if val.eq_ignore_ascii_case("false") {
+            ConfigParam::Boolean(false)
+        } else if let Ok(i) = val.parse::<i64>() {
+            ConfigParam::Int(i)
+        } else if let Ok(f) = val.parse::<f64>() {
+            ConfigParam::Float(f)
+        } else {
+            ConfigParam::String(val.to_string())
+        }
+    }
+
+    /// Builds a ConfigParam::HashMap from env vars with the given prefix (e.g., "MY_APP")
+    pub fn new_from_env<S: Into<String>>(prefix: S) -> ConfigParam {
+        let mut root = HashMap::new();
+        let prefix_with_sep = format!("{}__", prefix.into());
+
+        for (key, value) in env::vars() {
+            if let Some(stripped) = key.strip_prefix(&prefix_with_sep) {
+                let stripped = stripped.to_lowercase();
+                let parts: Vec<&str> = stripped.split("__").collect();
+                insert_nested(&mut root, &parts, &value);
+            }
+        }
+
+        ConfigParam::HashMap(root)
+    }
+
     /// Returns a human-readable type
     pub fn type_to_str(&self) -> &str {
         match self {
             ConfigParam::Boolean(_) => "boolean",
             ConfigParam::HashMap(_) => "hashmap",
+            ConfigParam::Float(_) => "float",
             ConfigParam::Int(_) => "integer",
             ConfigParam::Null => "null",
             ConfigParam::String(_) => "string",
@@ -95,6 +132,7 @@ impl ConfigParam {
                     v.debug_print(Some(format!("{}.{}", prefix, k)));
                 }
             },
+            ConfigParam::Float(v) => println!("{}: {}", prefix, v),
             ConfigParam::Int(v) => println!("{}: {}", prefix, v),
             ConfigParam::Null => println!("{}: null", prefix),
             ConfigParam::String(v) => println!("{}: {}", prefix, v),
@@ -114,6 +152,7 @@ impl Serialize for ConfigParam {
         match self {
             ConfigParam::Boolean(v) => v.serialize(serializer),
             ConfigParam::HashMap(v) => v.serialize(serializer),
+            ConfigParam::Float(v) => v.serialize(serializer),
             ConfigParam::Int(v) => v.serialize(serializer),
             ConfigParam::Null => serializer.serialize_none(),
             ConfigParam::String(v) => v.serialize(serializer),
@@ -155,6 +194,29 @@ fn yaml_to_config(yml: &Yaml) -> Result<ConfigParam, String> {
         Yaml::String(v) => ConfigParam::String(v.clone()),
     };
     Ok(result)
+}
+
+
+
+/// Insert a value into the nested hashmap structure
+fn insert_nested(
+    map: &mut HashMap<String, ConfigParam>,
+    keys: &[&str],
+    value: &str,
+) {
+    if keys.is_empty() {
+        return;
+    }
+    if keys.len() == 1 {
+        map.insert(keys[0].to_string(), ConfigParam::new_from_scalar_str_assuming_type(value));
+    } else {
+        let entry = map.entry(keys[0].to_string()).or_insert_with(|| {
+            ConfigParam::HashMap(HashMap::new())
+        });
+        if let ConfigParam::HashMap(submap) = entry {
+            insert_nested(submap, &keys[1..], value);
+        }
+    }
 }
 
 #[cfg(test)]

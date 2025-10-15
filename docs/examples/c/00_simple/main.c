@@ -23,6 +23,9 @@ void printConfig(const struct configtpl_ConfigParam *cfg, char *prefix)
         case CONFIGTPL_CONFIG_PARAM_TYPE_BOOLEAN:
             printf("%s=%s\n", prefix, cfg->value.boolean ? "true" : "false");
             break;
+            case CONFIGTPL_CONFIG_PARAM_TYPE_FLOAT:
+                printf("%s=%lf\n", prefix, cfg->value.float_num);
+                break;
         case CONFIGTPL_CONFIG_PARAM_TYPE_NULL:
             printf("%s=null\n", prefix);
             break;
@@ -114,7 +117,9 @@ int main(int argc, char** argv)
         }
     };
 
+    char *app_env_prefix = "MY_APP";
     struct configtpl_BuildArgs args = {
+        .env_vars_prefix = app_env_prefix,
         .context = &context,
         .defaults = NULL,
         .paths = paths,

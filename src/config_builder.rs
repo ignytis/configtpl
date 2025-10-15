@@ -49,6 +49,11 @@ impl<'a> ConfigBuilder<'a> {
             }
         }
 
+        if let Some(env_vars_prefix) = &args.env_vars_prefix {
+            let env_vars = ConfigParam::new_from_env(env_vars_prefix);
+            result = ConfigParam::merge(&result, &env_vars)?;
+        }
+
         // Apply overrides
         if let Some(o) = &args.overrides {
             result = ConfigParam::merge(&result, o)?;

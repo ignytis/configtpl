@@ -10,6 +10,8 @@ pub struct BuildArgs {
     pub context: Option<ConfigParam>,
     /// Defaults for configuration parameters. Applied at the first stage of configuration building.
     pub defaults: Option<ConfigParam>,
+    /// If provided, environment variables with this prefix will be injected into configuration after files
+    pub env_vars_prefix: Option<String>,
     /// Overrides for configuration parameters. Applied at the last stage of configuration building.
     pub overrides: Option<ConfigParam>,
     /// A list of paths to configuration files
@@ -23,6 +25,11 @@ impl BuildArgs {
 
     pub fn with_context(mut self, context: ConfigParam) -> Self {
         self.context = Some(context);
+        self
+    }
+
+    pub fn with_env_vars_prefix(mut self, prefix: String) -> Self {
+        self.env_vars_prefix = Some(prefix);
         self
     }
 

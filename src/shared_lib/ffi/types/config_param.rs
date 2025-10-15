@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     shared_lib::ffi::{types::{
         collections::Array,
-        std_types::{Bool, ConstCharPtr, LongInt}
+        std_types::{Bool, ConstCharPtr, LongInt, LongFloat}
     }, utils::strings::{cchar_const_deallocate, cchar_to_string, string_to_cchar}},
     types::config_param::ConfigParam as LibConfigParam
 };
@@ -13,6 +13,7 @@ use crate::{
 pub enum ConfigParamType {
     Boolean,
     Map,
+    Float,
     Int,
     Null,
     String,
@@ -23,6 +24,7 @@ pub enum ConfigParamType {
 #[repr(C)]
 pub union ConfigParamValue {
     pub boolean: Bool,
+    pub float_num: LongFloat,
     pub map: Array<ConfigParamDictItem>,
     pub integer: LongInt,
     pub null: (),
@@ -42,6 +44,13 @@ impl ConfigParam {
         Self {
             param_type: ConfigParamType::Boolean,
             value: ConfigParamValue{ boolean: v as Bool },
+        }
+    }
+
+    pub fn new_float(v: LongFloat) -> Self {
+        Self {
+            param_type: ConfigParamType::Float,
+            value: ConfigParamValue{ float_num: v },
         }
     }
 
@@ -130,6 +139,7 @@ impl ConfigParam {
                         (*(*item).value).debug_print(Some(format!("{}.{}", prefix, cchar_to_string((*item).name))));
                     }
                 },
+                ConfigParamType::Float => println!("{}: {}", prefix, self.value.float_num),
                 ConfigParamType::Int => println!("{}: {}", prefix, self.value.integer),
                 ConfigParamType::Null => println!("{}: null", prefix),
                 ConfigParamType::String => println!("{}: {}", prefix, cchar_to_string(self.value.string)),
@@ -161,6 +171,7 @@ impl From<&LibConfigParam> for ConfigParam {
         match param {
             LibConfigParam::Boolean(v) => Self::new_bool(*v),
             LibConfigParam::HashMap(v) => Self::new_map(&v),
+            LibConfigParam::Float(v) => Self::new_float(*v),
             LibConfigParam::Int(v) => Self::new_int(*v),
             LibConfigParam::Null => Self::new_null(),
             LibConfigParam::String(v) => Self::new_string(v),
@@ -191,6 +202,7 @@ impl Into<LibConfigParam> for ConfigParam {
                 }
                 LibConfigParam::HashMap(map)
             },
+            ConfigParamType::Float => LibConfigParam::Float(unsafe { self.value.float_num }),
             ConfigParamType::Int => LibConfigParam::Int(unsafe { self.value.integer }),
             ConfigParamType::Null => LibConfigParam::Null,
             ConfigParamType::String => LibConfigParam::String(unsafe { cchar_to_string(self.value.string) }),
