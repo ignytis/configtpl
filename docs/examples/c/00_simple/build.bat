@@ -1,0 +1,1 @@
+cl main.c configtpl.lib userenv.lib ntdll.lib ws2_32.lib

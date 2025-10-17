@@ -8,3 +8,9 @@
 # For docs/examples
 my_test_app
 *.o
+
+# Windows binaries and library files
+*.dll
+*.exe
+*.obj
+*.lib

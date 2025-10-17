@@ -172,7 +172,7 @@ impl From<&LibConfigParam> for ConfigParam {
             LibConfigParam::Boolean(v) => Self::new_bool(*v),
             LibConfigParam::HashMap(v) => Self::new_map(&v),
             LibConfigParam::Float(v) => Self::new_float(*v),
-            LibConfigParam::Int(v) => Self::new_int(*v),
+            LibConfigParam::Int(v) => Self::new_int(*v as i32), // TODO: check why this cast is needed. Inconsistent types in Windows?
             LibConfigParam::Null => Self::new_null(),
             LibConfigParam::String(v) => Self::new_string(v),
             LibConfigParam::Vec(v) => Self::new_vec(&v),
@@ -203,7 +203,7 @@ impl Into<LibConfigParam> for ConfigParam {
                 LibConfigParam::HashMap(map)
             },
             ConfigParamType::Float => LibConfigParam::Float(unsafe { self.value.float_num }),
-            ConfigParamType::Int => LibConfigParam::Int(unsafe { self.value.integer }),
+            ConfigParamType::Int => LibConfigParam::Int(unsafe { self.value.integer as i64 }), // TODO: check why this cast is needed. Inconsistent types in Windows?
             ConfigParamType::Null => LibConfigParam::Null,
             ConfigParamType::String => LibConfigParam::String(unsafe { cchar_to_string(self.value.string) }),
             ConfigParamType::Vec => {
