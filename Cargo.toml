@@ -1,10 +1,13 @@
 [package]
 name = "configtpl"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 
+categories = ["config"]
 description = "A configuration library which uses Jinja + YAML to render the configuration values."
+keywords = ["configuration", "library"]
 license-file = "LICENSE"
+repository = "https://github.com/ignytis/configtpl"
 
 [lib]
 crate-type = ["cdylib", "lib", "staticlib"]
